@@ -1,0 +1,40 @@
+$colors: transparent, blue, green, red, DarkBlue, Brown, DarkCyan, #000, gray;
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.col {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 2px outset #eee;
+  background-color: #c0c0c0;
+  text-align: center;
+
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: #eee;
+    font-size: 14px;
+    font-weight: bold;
+
+    &.mask {
+      display: none;
+    }
+  }
+}
+
+@for $i from 0 through 8 {
+  .item-#{$i} {
+    color: nth($colors, $i + 1);
+  }
+}

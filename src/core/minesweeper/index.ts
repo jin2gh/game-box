@@ -1,7 +1,12 @@
 import { DIRS8 } from '@/utils/constants'
-import { LEVEL_MAP } from './constants'
-import type { Grid } from './types'
-import { LevelEnum, PointState } from './utils'
+import {
+  STEP,
+  MASK_LINE,
+  QM_LINE,
+  LEVEL_TB,
+  LAND_MINE_STATE
+} from './constants'
+import type { Grid, Level } from './types'
 
 
 class Minesweeper {
@@ -9,12 +14,12 @@ class Minesweeper {
   cols: number
   count: number
   grid: Grid
-  constructor(level: LevelEnum) {
-    const { rows, cols, count } = LEVEL_MAP[level]
+  constructor(level: Level) {
+    const { rows, cols, count } = LEVEL_TB[level]
     this.rows = rows
     this.cols = cols
     this.count = count
-    this.grid = new Array(rows).fill(new Array(cols).fill(0))
+    this.grid = new Array(rows).fill(0).map(() => new Array(cols).fill(MASK_LINE))
   }
 
   getPosition(int: number): [number, number] {
@@ -29,8 +34,9 @@ class Minesweeper {
       const randomVal: number = Math.floor(Math.random() * total)
       if (!hashMap.has(randomVal)) {
         const [row, col] = this.getPosition(randomVal)
-        this.grid[row][col] = PointState.TRUE
+        this.grid[row][col] += LAND_MINE_STATE
         hashMap.set(randomVal, true)
+        i += 1
       }
     }
 
@@ -44,21 +50,32 @@ class Minesweeper {
         if (this.isLandMine(i, j)) continue
         for (const [x, y] of DIRS8) {
           const ni = i + x, nj = j + y
-          if (ni > 0 && ni < r && nj > 0 && nj < c && this.isLandMine(ni, nj)) this.grid[i][j] += 1
+          if (ni >= 0 && ni < r && nj >= 0 && nj < c && this.isLandMine(ni, nj)) this.grid[i][j] += 1
         }
       }
     }
   }
 
   isLandMine(x: number, y: number): boolean {
-    return this.grid[x][y] === PointState.TRUE
+    return this.grid[x][y] === LAND_MINE_STATE
+  }
+
+  clickItem(x: number, y: number): void {
+    if (this.grid[x][y] >= MASK_LINE) this.grid[x][y] -= STEP
+  }
+
+  markItem(x: number, y: number): void {
+    if (this.grid[x][y] < MASK_LINE) return
+    if (this.grid[x][y] >= QM_LINE) this.grid[x][y] -= STEP * 2
+    else this.grid[x][y] += STEP
   }
 }
 
-export function init(level: LevelEnum): Minesweeper {
+export interface MinesweeperType extends Minesweeper {}
+
+export function init(level: Level) {
   const minesweeper = new Minesweeper(level)
   minesweeper.initLandMine()
   return minesweeper
 }
 
-export interface MinesweeperType extends Minesweeper {}

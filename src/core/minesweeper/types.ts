@@ -1,4 +1,9 @@
 
-import type { Digit, Tuple } from '@/utils/types'
+import type { EnumElem, Tuple, ValueOf } from '@/utils/types'
+import type { LEVEL_KEY } from './constants'
 
-export type Grid = Tuple<Tuple<Digit, number>, number>
+export type Level = ValueOf<typeof LEVEL_KEY>
+export type ItemVal = EnumElem<40>
+
+export type Grid = Tuple<Tuple<ItemVal, number>, number>
+
