@@ -5,6 +5,13 @@ export const QM_LINE = 30
 
 export const LAND_MINE_STATE = 9
 
+export const GAME_STATE = {
+  INIT: 0,
+  PLAYING: 1,
+  SUCCESS: 2,
+  FAIL: 3
+} as const
+
 export const LEVEL_KEY = {
   E: 'E',
   M: 'M',
