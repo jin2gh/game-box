@@ -7,7 +7,7 @@ import {
   GAME_STATE,
   LEVEL_KEY,
   LEVEL_TB,
-  LAND_MINE_STATE
+  MINE_STATE
 } from './constants'
 
 export type GameState = ValueOf<typeof GAME_STATE>
@@ -26,8 +26,11 @@ class Minesweeper {
   rows: number
   cols: number
   count: number
-  grid: Grid
-  state: GameState
+  countdown!: number
+  flagged!: number
+  plowed!: number
+  grid!: Grid
+  state!: GameState
   opts: Opts
   constructor(opts: Opts) {
     const { level } = opts
@@ -35,9 +38,8 @@ class Minesweeper {
     this.rows = rows
     this.cols = cols
     this.count = count
-    this.state = GAME_STATE.INIT
     this.opts = opts
-    this.grid = new Array(rows).fill(0).map(() => new Array(cols).fill(MASK_LINE))
+    this.reset()
   }
 
   getPosition(int: number): [number, number] {
@@ -62,7 +64,7 @@ class Minesweeper {
         const [row, col] = this.getPosition(randomVal)
         hashMap.set(randomVal, true)
         if (row === p[0] && col === p[1]) continue
-        this.grid[row][col] += LAND_MINE_STATE
+        this.grid[row][col] += MINE_STATE
         i += 1
       }
     }
@@ -73,43 +75,56 @@ class Minesweeper {
   compute(): void {
     for (let i = 0; i < this.rows; ++i) {
       for (let j = 0; j < this.cols; ++j) {
-        if (this.isLandMine(i, j)) continue
+        if (this.isMine(i, j)) continue
         for (const [x, y] of DIRS8) {
           const ni = i + x, nj = j + y
-          if (this.inArea(ni, nj) && this.isLandMine(ni, nj)) this.grid[i][j] += 1
+          if (this.inArea(ni, nj) && this.isMine(ni, nj)) this.grid[i][j] += 1
         }
       }
     }
   }
 
+  reset(): void {
+    this.grid = new Array(this.rows).fill(0).map(() => new Array(this.cols).fill(MASK_LINE))
+    this.state = GAME_STATE.INIT
+    this.plowed = 0
+    this.countdown = 0
+    this.flagged = 0
+  }
+
   start(p: Point): void {
     this.init(p)
-    this.showNoLandMineArea(p)
+    this.showNoMineArea(p)
     this.state = GAME_STATE.PLAYING
   }
 
-  end(): void {}
-
   fail(): void {
     this.opts.fail()
-    this.end()
+    this.showMine()
   }
 
   success(): void {
     this.opts.success()
-    this.end()
   }
 
-  showNoLandMineArea(p: Point): void {
+  showNoMineArea(p: Point): void {
     const que: Point[] = [p]
     while (que.length) {
       const [x, y] = que.shift() as Point
       if (this.isMask(x, y)) this.grid[x][y] -= STEP
       this.checkNear([x, y], ([nx, ny]: Point): void => {
         if (this.isEmpty(nx, ny)) que.push([nx, ny])
-        if (this.isMask(nx, ny) && !this.isLandMine(nx, ny)) this.grid[nx][ny] -= STEP
+        if (this.isMask(nx, ny) && !this.isMine(nx, ny)) this.grid[nx][ny] -= STEP
+        // TODO
       })
     }
+    this.tryToEnd()
+  }
+
+  showMine(): void {
+    this.mapGrid(([x, y]) => {
+      if (this.isMine(x, y)) this.grid[x][y] %= STEP
+    })
   }
 
   checkNear(p: Point, cb: TriggerFn): void {
@@ -122,17 +137,35 @@ class Minesweeper {
     }
   }
 
+  tryToEnd(): void {
+    if (this.plowed !== this.count) return
+    let maskCnt = 0
+    this.mapGrid(([x, y]) => {
+      if (this.isMask(x, y)) maskCnt += 1
+    })
+    if (maskCnt === 0) this.success()
+  }
+
+  mapGrid(cb: TriggerFn): void {
+    for (let i = 0; i < this.rows; ++i) {
+      for (let j = 0; j < this.cols; ++j) {
+        cb([i, j])
+      }
+    }
+  }
+
   clickItem(p: Point): void {
     const [x, y] = p
     if (this.state === GAME_STATE.INIT) {
       this.start(p)
+      return
     }
-    else if (this.grid[x][y] >= MASK_LINE) { // 
-      if (this.isLandMine(x, y)) {
+    if (this.grid[x][y] >= MASK_LINE) { // 
+      if (this.isMine(x, y)) {
         this.fail()
         return
       } else {
-        this.showNoLandMineArea(p)
+        this.showNoMineArea(p)
       }
     }
     else {
@@ -141,18 +174,33 @@ class Minesweeper {
         if (this.isFlag(nx, ny)) flagCnts += 1
       })
 
-      if (flagCnts === this.grid[x][y]) this.showNoLandMineArea(p)
+      if (flagCnts === this.grid[x][y]) this.showNoMineArea(p)
     }
   }
 
   markItem(p: Point): void {
     const [x, y] = p
-    if (this.isMask(x, y)) this.grid[x][y] += STEP
-    else if (this.isFlag(x, y)) this.grid[x][y] -= STEP
+    if (this.isPlowed(x, y)) return
+    if (this.isMask(x, y)) {
+      if (this.isMine(x, y)) this.plowed += 1
+      this.flagged += 1
+      this.grid[x][y] += STEP
+
+      this.tryToEnd()
+    }
+    else {
+      if (this.isMine(x, y)) this.plowed -= 1
+      this.flagged -= 1
+      this.grid[x][y] -= STEP
+    }
   }
 
   inArea(x: number, y: number): boolean {
     return x >= 0 && x < this.rows && y >= 0 && y < this.cols
+  }
+
+  isPlowed(x: number, y: number): boolean {
+    return this.grid[x][y] < MASK_LINE
   }
 
   isMask(x: number, y: number): boolean {
@@ -167,8 +215,8 @@ class Minesweeper {
     return this.grid[x][y] === MASK_LINE
   }
 
-  isLandMine(x: number, y: number): boolean {
-    return this.grid[x][y] - STEP === LAND_MINE_STATE
+  isMine(x: number, y: number): boolean {
+    return this.grid[x][y] % STEP === MINE_STATE
   }
 }
 

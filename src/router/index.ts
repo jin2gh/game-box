@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Minesweeper from '@/views/minesweeper/index.vue'
+import Minesweeper from '@/views/minesweeper'
 
 
 const router = createRouter({

@@ -3,7 +3,6 @@ import {
   ref,
   onMounted,
 } from 'vue'
-import type { PropType } from 'vue'
 import classnames from 'classnames'
 import {
   init as initMS,
@@ -14,34 +13,43 @@ import {
 import {
   MASK_LINE,
   FLAG_LINE,
-  QM_LINE,
   MINE_STATE,
   LEVEL_KEY
 } from '@/core/minesweeper/constants'
-import Menu from './Menu.vue'
+import Menu from './components/Menu.vue'
 import styles from './styles.module.scss'
 
 export default defineComponent({
-  name: 'Minefield',
-  props: {
-    level: { type: String as PropType<Level>, default: LEVEL_KEY.E },
-  },
-  setup(props) {
-    const { level } = props
+  name: 'minisweeper',
+  setup() {
     const instance = ref<MinesweeperType>()
+    let level = ref<Level>(LEVEL_KEY.E)
+    let count = ref<number>(0)
 
-    function gameOver(): void {}
-
-    function onSuccess(): void {
-
+    function gameOver(): void {
+      setTimeout(() => {
+        alert('游戏结束')
+      }, 999)
     }
 
-    function init(): void {
+    function onSuccess(): void {
+      setTimeout(() => {
+        alert('成功')
+      }, 999)
+    }
+
+    function init(level: Level): void {
       instance.value = initMS({
         level,
         fail: gameOver,
         success: onSuccess
       })
+      count.value = instance.value.count
+    }
+
+    function changeLevel(newVal: Level): void {
+      level.value = newVal
+      init(newVal)
     }
 
     function show(x: number, y: number): void {
@@ -50,6 +58,7 @@ export default defineComponent({
     function mark(e: MouseEvent, x: number, y: number): void {
       e.preventDefault()
       instance.value?.markItem([x, y])
+      count.value -= (instance.value?.flagged || 0)
     }
     function renderItem (val: ItemVal): JSX.Element {
       if (val === MINE_STATE) return <>&#128163;</>
@@ -60,11 +69,11 @@ export default defineComponent({
     }
 
     onMounted(() => {
-      init()
+      init(level.value)
     })
     return () => (
       <>
-        <Menu />
+        <Menu level={level.value} count={count.value} onChange={changeLevel} />
         <div>
           {instance.value?.grid.map((row, i) => 
             <div class={styles.row}>
