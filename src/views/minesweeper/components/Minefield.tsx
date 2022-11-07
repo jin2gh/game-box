@@ -14,7 +14,6 @@ import {
 import {
   MASK_LINE,
   FLAG_LINE,
-  QM_LINE,
   MINE_STATE,
   LEVEL_KEY
 } from '@/core/minesweeper/constants'

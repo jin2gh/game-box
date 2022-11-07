@@ -3,7 +3,7 @@ export const MASK_LINE = 10
 export const FLAG_LINE = 20
 export const QM_LINE = 30
 
-export const LAND_MINE_STATE = 9
+export const MINE_STATE = 9
 
 export const GAME_STATE = {
   INIT: 0,
