@@ -1,29 +1,62 @@
+@use "../../styles/mixins.scss";
+
+$unit: 28px;
+$gap: 8px;
+$border: 3px;
+$unit-font-size: $unit - 2 * $border;
 $colors: transparent, blue, green, red, DarkBlue, Brown, DarkCyan, #000, gray;
 
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.box {
+  width: max-content;
+  margin: 0 auto;
+  background-color: #ccc;
+  border: $gap solid #ccc;
 }
 
-.col {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  border: 2px outset #eee;
-  background-color: #c0c0c0;
-  text-align: center;
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $gap;
+  padding: 4px;
+  border: $border solid #808080;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+}
+
+// &#128547; &#128565; &#128526;
+
+.btn {
+  @include mixins.flex-center;
+
+  width: $unit;
+  height: $unit;
+  box-sizing: border-box;
+  border: $border solid #808080;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  font-size: $unit-font-size;
+  cursor: pointer;
+}
+
+.field {
+  @include mixins.flex-center;
+
+  .btn {
+    position: relative;
+  }
 
   .item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include mixins.flex-center;
+
     position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background-color: #eee;
+    width: $unit;
+    height: $unit;
+    top: -$border;
+    left: -$border;
+    border: 1px solid #9d9d9d;
+    box-sizing: border-box;
+    background-color: #bebebe;
     font-size: 14px;
     font-weight: bold;
 

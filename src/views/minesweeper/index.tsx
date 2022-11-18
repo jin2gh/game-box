@@ -16,7 +16,7 @@ import {
   MINE_STATE,
   LEVEL_KEY
 } from '@/core/minesweeper/constants'
-import Menu from './components/Menu.vue'
+import Menu from './Menu'
 import styles from './styles.module.scss'
 
 export default defineComponent({
@@ -72,14 +72,14 @@ export default defineComponent({
       init(level.value)
     })
     return () => (
-      <>
+      <div class={styles.box}>
         <Menu level={level.value} count={count.value} onChange={changeLevel} />
         <div>
           {instance.value?.grid.map((row, i) => 
-            <div class={styles.row}>
+            <div class={styles.field}>
               {row.map((val, j) => (
                 <div
-                  class={styles.col}
+                  class={styles.btn}
                   onClick={() => show(i, j)}
                   onContextmenu={e => mark(e, i, j)}
                 >{renderItem(val)}
@@ -87,7 +87,7 @@ export default defineComponent({
               ))}
           </div>)}
         </div>
-      </>
+      </div>
     )
   }
 })
