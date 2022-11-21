@@ -18,8 +18,8 @@ export type Point = [number, number]
 export type TriggerFn = (p: Point) => void
 export type Opts = {
   level: Level
-  fail: Function
-  success: Function
+  fail?: Function
+  success?: Function
 }
 
 class Minesweeper {
@@ -28,6 +28,7 @@ class Minesweeper {
   count: number
   countdown!: number
   flagged!: number
+  level: Level
   plowed!: number
   grid!: Grid
   state!: GameState
@@ -38,6 +39,7 @@ class Minesweeper {
     this.rows = rows
     this.cols = cols
     this.count = count
+    this.level = opts.level
     this.opts = opts
     this.reset()
   }
@@ -99,12 +101,14 @@ class Minesweeper {
   }
 
   fail(): void {
-    this.opts.fail()
+    this.opts.fail?.()
     this.showMine()
+    this.state = GAME_STATE.FAIL
   }
 
   success(): void {
-    this.opts.success()
+    this.opts.success?.()
+    this.state = GAME_STATE.SUCCESS
   }
 
   showNoMineArea(p: Point): void {

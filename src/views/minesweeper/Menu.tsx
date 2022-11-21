@@ -1,44 +1,79 @@
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import type { Level } from '@/core/minesweeper'
-import { LEVEL_TB } from '@/core/minesweeper/constants'
+import type { GameState, Level } from '@/core/minesweeper'
+import { GAME_STATE, LEVEL_TB } from '@/core/minesweeper/constants'
 import styles from './styles.module.scss'
 
 type menuEmits = {
-  change: (level: Level) => void
-  success: (time: number) => void
+  changeLevel: (level: Level) => void
+  reset: () => void
 }
 
 const menuProps = {
   count: Number,
-  onChange: Function as PropType<menuEmits['change']>,
+  status: {
+    default: GAME_STATE.INIT,
+    type: Number as PropType<GameState>,
+    required: true
+  },
+  time: {
+    default: 0,
+    type: Number,
+  },
+  onChangeLevel: Function as PropType<menuEmits['changeLevel']>,
+  onReset: Function as PropType<menuEmits['reset']>,
+}
+
+type EmojiMapType = {
+  [k: string]: number
+}
+
+const emojiMap: EmojiMapType = {
+  [GAME_STATE.INIT]: 128578,
+  [GAME_STATE.PLAYING]: 128578,
+  [GAME_STATE.FAIL]: 128534,
+  [GAME_STATE.SUCCESS]: 128526
 }
 
 export default defineComponent({
-  name: 'menu',
+  name: 'MenuBar',
   props: menuProps,
-  emits: ['change'],
+  emits: ['changeLevel', 'reset'],
   setup(props, { emit }) {
-    const { count } = props
     const btns = Object.keys(LEVEL_TB) as Level[]
     function changeLevel(level: Level) {
-      emit('change', level)
+      emit('changeLevel', level)
     }
-    return () => (
-      <header>
-        <div class={styles.menu}>
-          {btns.map((it, i) => (
-            <div key={i} onClick={() => changeLevel(it)}>
-              {LEVEL_TB[it].name}
-            </div>
-          ))}
-        </div>
-        <div class={styles.menu}>
-          <div>{count}</div>
-          <div class={styles.btn}>&#128578;</div>
-          <div>{count}</div>
-        </div>
-      </header>
-    )
+
+    function reset() {
+      emit('reset')
+    }
+
+    function renderBtn (state: GameState): String {
+      const key: string = String(state) 
+      return String.fromCodePoint(emojiMap[key])
+    }
+
+    return () => {
+      const { count, status, time } = props
+
+      return (
+        <header>
+          <div class={styles.menu}>
+            {btns.map((it, i) => (
+              <div key={i} onClick={() => changeLevel(it)}>
+                {LEVEL_TB[it].name}
+              </div>
+            ))}
+          </div>
+          <div class={styles.menu}>
+            <div>{count}</div>
+            <div class={styles.btn} onClick={reset}>{renderBtn(status)}</div>
+            <div>{time}</div>
+          </div>
+          <div></div>
+        </header>
+      )
+    }
   }
 })

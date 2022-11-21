@@ -16,40 +16,16 @@ import {
   MINE_STATE,
   LEVEL_KEY
 } from '@/core/minesweeper/constants'
-import Menu from './Menu'
+import MenuBar from './Menu'
 import styles from './styles.module.scss'
 
 export default defineComponent({
   name: 'minisweeper',
   setup() {
     const instance = ref<MinesweeperType>()
-    let level = ref<Level>(LEVEL_KEY.E)
-    let count = ref<number>(0)
-
-    function gameOver(): void {
-      setTimeout(() => {
-        alert('游戏结束')
-      }, 999)
-    }
-
-    function onSuccess(): void {
-      setTimeout(() => {
-        alert('成功')
-      }, 999)
-    }
 
     function init(level: Level): void {
-      instance.value = initMS({
-        level,
-        fail: gameOver,
-        success: onSuccess
-      })
-      count.value = instance.value.count
-    }
-
-    function changeLevel(newVal: Level): void {
-      level.value = newVal
-      init(newVal)
+      instance.value = initMS({ level })
     }
 
     function show(x: number, y: number): void {
@@ -58,7 +34,6 @@ export default defineComponent({
     function mark(e: MouseEvent, x: number, y: number): void {
       e.preventDefault()
       instance.value?.markItem([x, y])
-      count.value -= (instance.value?.flagged || 0)
     }
     function renderItem (val: ItemVal): JSX.Element {
       if (val === MINE_STATE) return <>&#128163;</>
@@ -69,25 +44,36 @@ export default defineComponent({
     }
 
     onMounted(() => {
-      init(level.value)
+      init(LEVEL_KEY.E)
     })
-    return () => (
-      <div class={styles.box}>
-        <Menu level={level.value} count={count.value} onChange={changeLevel} />
-        <div>
-          {instance.value?.grid.map((row, i) => 
-            <div class={styles.field}>
-              {row.map((val, j) => (
-                <div
-                  class={styles.btn}
-                  onClick={() => show(i, j)}
-                  onContextmenu={e => mark(e, i, j)}
-                >{renderItem(val)}
-                </div>
-              ))}
-          </div>)}
+    return () => {
+      const { level, state, count, flagged } = instance.value || {}
+      const restCount = (count || 0) - (flagged || 0)
+
+      return instance.value ? (
+        <div class={styles.box}>
+          <MenuBar
+            count={restCount}
+            level={level}
+            status={state}
+            onChangeLevel={init}
+            onReset={() => init(level as Level)}
+          />
+          <div>
+            {instance.value.grid.map((row, i) => 
+              <div class={styles.field}>
+                {row.map((val, j) => (
+                  <div
+                    class={styles.btn}
+                    onClick={() => show(i, j)}
+                    onContextmenu={e => mark(e, i, j)}
+                  >{renderItem(val)}
+                  </div>
+                ))}
+            </div>)}
+          </div>
         </div>
-      </div>
-    )
+      ) : null
+    }
   }
 })
